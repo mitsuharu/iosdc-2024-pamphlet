@@ -16,7 +16,7 @@ Bluesky: @mitsuharu.bsky.social
 
 ## 開発環境
 
-開発環境は MacBook Pro 14 インチ 2021、Apple M1 Pro、macOS Sonoma 14.5 です。Xcode 15.3 で開発しました。検証機として iPhone SE（第３世代）、iOS 17.5 を利用しました。
+開発環境は MacBook Pro 14 インチ 2021、Apple M1 Pro、macOS Sonoma 14.5 を用いて、Xcode 15.3 で開発しました。検証機として iPhone SE（第３世代）、iOS 17.5 を利用しました。
 
 ### 対象のサーマルプリンターについて
 
@@ -26,7 +26,7 @@ Bluesky: @mitsuharu.bsky.social
 | :--: | :-: | :-: | :-: | :-: |
 | <div class="no-break">NT212_S</div> | 2.1.0 | 2.2.0 | 1.0.10 | 0.0.1 |
 
-その機種の他に、80mm 幅のレシート印刷に対応した兄弟機 “80mm Kitchen Cloud Printer”、EPSON 社のモバイルサーマルプリンターを所有しています。これらの機種でも動作確認を行なっています。
+その機種の他に、80mm 幅に対応した兄弟機 “SUNMI 80mm Kitchen Cloud Printer”、EPSON 社のレシートプリンター “TM-P20II” を所有しています。これらの機種でも動作確認を行なっています。
 
 ## Bluetoothでの接続方法
 
