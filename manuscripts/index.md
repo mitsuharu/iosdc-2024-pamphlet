@@ -22,7 +22,7 @@ Bluesky: @mitsuharu.bsky.social
 
 本記事で対象するとサーマルプリンターは SUNMI 社が製造する “SUNMI 58mm Cloud Printer” です。58mm 幅の感熱紙を印刷できるサーマルプリンターです。無線のインタフェースとして Wi-Fi 4（2.4GHz）と Bluetooth 4.2 BLE を備えています。この機種の Bluetooth を利用して、サーマルプリンターを制御します。なお、私が所持する機種のモデルおよびソフトウェアバージョンは次のとおりです。
 
-| Model | FirmWare version | SUNMI APP version | Partner APP version | MiniApp version |
+| Model | Firmware version | SUNMI APP version | Partner APP version | MiniApp version |
 | :--: | :-: | :-: | :-: | :-: |
 | <div class="no-break">NT212_S</div> | 2.1.0 | 2.2.0 | 1.0.10 | 0.0.1 |
 
