@@ -28,13 +28,67 @@ Bluesky: @mitsuharu.bsky.social
 
 その機種の他に、80mm 幅に対応した兄弟機 “SUNMI 80mm Kitchen Cloud Printer”、EPSON 社のレシートプリンター “TM-P20II” を所有しています。これらの機種でも動作確認を行なっています。
 
-## Bluetoothでの接続方法
+## Bluetooth による制御方法
 
-- Bluetooth の基礎知識
-- iOS での Bluetooth 接続手順
-- Bluetooth のペアリング方法
-  - CoreBluetooth フレームワークの概要
-  - デバイスのスキャンと接続
+CoreBluetooth を用いて、サーマルプリンターを制御します。私はライブラリ AsyncBluetooth [^AsyncBluetooth] を利用しました。CoreBluetooth が提供する API は Delegate を利用するため、複雑になりがちです。一方、AsyncBluetooth は Swift Concurrency でシンプルに書けるので、採用しました。それを利用して、サーマルプリンターを接続および制御する方法を紹介します。ソースコードは紙面の都合上、簡略表示します。実際にソースコードを書く際は付録を参照してください。なお、Bluetooth を利用するので、Info.plist に許可設定と利用理由を忘れずに追加しましょう。
+
+```xml
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>Use to connect with thermal printers</string>
+```
+
+<!-- textlint-disable -->
+[^AsyncBluetooth]: https://github.com/manolofdez/AsyncBluetooth
+<!-- textlint-enable -->
+
+まず最初に Bluetooth 機器のスキャンを行い、サーマルプリンターを探します。対象のサーマルプリンターは `CloudPrint_{数字}` という名前が設定されているので、その名前がある機種を選択して接続します。例では直接 if 文で選択しましたが、一般には検出された機種を一覧表示して、目視確認するとよいです。
+
+```swift
+import AsyncBluetooth
+
+let manager = CentralManager()
+
+try await manager.waitUntilReady()
+
+let stream = try await manager.scanForPeripherals(withServices: nil)
+for await scanData in stream {
+    if scanData.peripheral.name.contains("CloudPrint") {
+      try await manager.connect(scanData.peripheral, options: nil)
+      await manager.stopScan()
+    }
+}
+```
+
+選択した Peripheral から、サービス（serviceUUID）および、そのサービス内のキャラクタリスティック（characteristicUUID）を取得します。今回はデータ送信するため、書き込み可能なキャラクタリスティックを選択します。例では、単純に条件に合う最初の組み合わせを選択してますが、実際は機種のドキュメントを確認して、適切な組み合わせを選択してください。
+
+```swift
+try await peripheral.discoverServices(nil)
+for service in peripheral.discoveredServices ?? [] {
+  try await peripheral.discoverCharacteristics(nil, for: service)
+  guard
+    let serviceUUID = UUID(uuidString: service.uuid.uuidString),
+    let char = service.discoveredCharacteristics?.first(where: {
+      $0.properties.contains(.write)
+    }),
+    let characteristicUUID = UUID(uuidString: char.uuid.uuidString)
+  else {
+    continue
+  }
+   return (serviceUUID, characteristicUUID)
+}
+```
+
+これで準備が揃いました。サーマルプリンターにデータを送信する関数を作成しましょう。印刷するので関数を `print` と命名したいところですが、すでに同名関数があるので、我慢しました。
+
+```swift
+func run(data: Data) async throws　{
+  try await peripheral.writeValue(
+    value,
+    forCharacteristicWithUUID: characteristicUUID,
+    ofServiceWithUUID: serviceUUID
+  )
+}
+```
 
 ## ESC/POS コマンドの概要
 
