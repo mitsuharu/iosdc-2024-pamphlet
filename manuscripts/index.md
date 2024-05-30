@@ -28,68 +28,6 @@ Bluesky: @mitsuharu.bsky.social
 
 その機種の他に、80mm 幅に対応した兄弟機 “SUNMI 80mm Kitchen Cloud Printer”、EPSON 社のレシートプリンター “TM-P20II” を所有しています。これらの機種でも動作確認を行なっています。
 
-## Bluetooth による制御方法
-
-CoreBluetooth を用いて、サーマルプリンターを制御します。私はライブラリ AsyncBluetooth [^AsyncBluetooth] を利用しました。CoreBluetooth が提供する API は Delegate を利用するため、複雑になりがちです。一方、AsyncBluetooth は Swift Concurrency でシンプルに書けるので、採用しました。それを利用して、サーマルプリンターを接続および制御する方法を紹介します。ソースコードは紙面の都合上、簡略表示します。実際にソースコードを書く際は付録を参照してください。なお、Bluetooth を利用するので、Info.plist に許可設定と利用理由を忘れずに追加しましょう。
-
-```xml
-<key>NSBluetoothAlwaysUsageDescription</key>
-<string>Use to connect with thermal printers</string>
-```
-
-<!-- textlint-disable -->
-[^AsyncBluetooth]: https://github.com/manolofdez/AsyncBluetooth
-<!-- textlint-enable -->
-
-まず最初に Bluetooth 機器のスキャンを行い、サーマルプリンターを探します。対象のサーマルプリンターは `CloudPrint_{数字}` という名前が設定されているので、その名前がある機種を選択して接続します。例では直接 if 文で選択しましたが、一般には検出された機種を一覧表示して、目視確認するとよいです。
-
-```swift
-import AsyncBluetooth
-
-let manager = CentralManager()
-
-try await manager.waitUntilReady()
-
-let stream = try await manager.scanForPeripherals(withServices: nil)
-for await scanData in stream {
-    if scanData.peripheral.name.contains("CloudPrint") {
-      try await manager.connect(scanData.peripheral, options: nil)
-      await manager.stopScan()
-    }
-}
-```
-
-選択した Peripheral から、サービス（serviceUUID）および、そのサービス内のキャラクタリスティック（characteristicUUID）を取得します。今回はデータ送信するため、書き込み可能なキャラクタリスティックを選択します。例では、単純に条件に合う最初の組み合わせを選択してますが、実際は機種のドキュメントを確認して、適切な組み合わせを選択してください。
-
-```swift
-try await peripheral.discoverServices(nil)
-for service in peripheral.discoveredServices ?? [] {
-  try await peripheral.discoverCharacteristics(nil, for: service)
-  guard
-    let serviceUUID = UUID(uuidString: service.uuid.uuidString),
-    let char = service.discoveredCharacteristics?.first(where: {
-      $0.properties.contains(.write)
-    }),
-    let characteristicUUID = UUID(uuidString: char.uuid.uuidString)
-  else {
-    continue
-  }
-   return (serviceUUID, characteristicUUID)
-}
-```
-
-これで準備が揃いました。サーマルプリンターにデータを送信する関数を作成しましょう。印刷するので関数を `print` と命名したいところですが、すでに同名関数があるので、我慢しました。
-
-```swift
-func run(data: Data) async throws　{
-  try await peripheral.writeValue(
-    value,
-    forCharacteristicWithUUID: characteristicUUID,
-    ofServiceWithUUID: serviceUUID
-  )
-}
-```
-
 ## サーマルプリンターのページ記述言語
 
 ページ記述言語はプリンターに対して印刷を指示するためのプログラミング言語です。アドビ社が開発した PostScript が有名です。その他にもページ記述言語はあり、セイコーエプソン社が開発した ESC/P（Epson Standard Code for Printers）があります。かつてドットインパクトプリンタが主流だった時代は、多くのメーカーがサポートしていました。そのバリエーションの１つとして、POS 端末で採用されるサーマルプリンターを制御する ESC/POS があります。この言語は現在も多くのサーマルプリンターでサポートされています。私が所有している３台のサーマルプリンターも ESC/POS をサポートしています。つまり、この ESC/POS コマンドを利用すれば、サーマルプリンターで印刷ができるのです。
@@ -113,29 +51,281 @@ ESC/POS は、プリンターに送信されるコマンド（16 進数のバイ
 0a                                // 改行
 ```
 
-このコマンドをサーマルプリンターに渡せば「**Hello World**」が印刷されます。iPhone からコマンドをサーマルプリンターに送信するため、先節で紹介した書き込み関数を利用します。
+このコマンドをサーマルプリンターに渡せば「**Hello World**」が印刷されます。iPhone からサーマルプリンターにコマンドを送信する制御方法を紹介していきます。
+
+## Bluetooth による制御方法
+
+CoreBluetooth を用いて、サーマルプリンターを制御します。私はライブラリ AsyncBluetooth [^AsyncBluetooth] を利用しました。CoreBluetooth が提供する API は Delegate を利用するため、複雑になりがちです。一方、AsyncBluetooth は Swift Concurrency でシンプルに書けるので、採用しました。それを利用して、サーマルプリンターを接続および制御する方法を紹介します。ソースコードは紙面の都合上、簡略表示します。実際にソースコードを書く際は付録を参照してください。なお、Bluetooth を利用するので、Info.plist に許可設定と利用理由を忘れずに追加しましょう。
+
+```xml
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>Use to connect with thermal printers</string>
+```
+
+<!-- textlint-disable -->
+[^AsyncBluetooth]: https://github.com/manolofdez/AsyncBluetooth
+<!-- textlint-enable -->
+
+まず最初に Bluetooth 機器のスキャンを行い、サーマルプリンターを探します。対象のサーマルプリンターは `CloudPrint_{数字}` という名前が設定されているので、その名前がある機種を選択して接続します。例ではスキャンされた機器の名前を逐次確認して選択しましたが、一般には検出された機種を一覧表示して、確認してから選択するとよいです。
+
+```swift
+import AsyncBluetooth
+
+let manager = CentralManager()
+
+try await manager.waitUntilReady()
+
+let stream = try await manager.scanForPeripherals(withServices: nil)
+for await scanData in stream {
+    if let name = scanData.peripheral.name, name.contains("CloudPrint") {
+      try await manager.connect(scanData.peripheral, options: nil)
+      await manager.stopScan()
+    }
+}
+```
+
+接続した Peripheral から、印刷に関するサービス（serviceUUID）および、そのサービスのデータ値に対応するキャラクタリスティック（characteristicUUID）を取得します。今回はデータ送信するため、書き込み可能なキャラクタリスティックを選択します。例では、単純に条件に合う最初の組み合わせを選択してますが、実際は機種のドキュメントを確認して、適切な組み合わせを選択してください。
+
+```swift
+try await peripheral.discoverServices(nil)
+
+for service in peripheral.discoveredServices ?? [] {
+  try await peripheral.discoverCharacteristics(nil, for: service)
+  guard
+    let serviceUUID = UUID(uuidString: service.uuid.uuidString),
+    let char = service.discoveredCharacteristics?.first(where: {
+      $0.properties.contains(.write)
+    }),
+    let characteristicUUID = UUID(uuidString: char.uuid.uuidString)
+  else {
+    continue
+  }
+   return (serviceUUID, characteristicUUID)
+}
+```
+
+これで準備が揃いました。サーマルプリンターにデータを送信する関数を作成しましょう。印刷するので関数を `print` と命名したいところですが、すでに同名関数があるので、我慢しました。
+
+```swift
+func send(data: Data) async throws {
+  try await peripheral.writeValue(
+    value,
+    forCharacteristicWithUUID: characteristicUUID,
+    ofServiceWithUUID: serviceUUID
+  )
+}
+```
 
 ## iOS アプリでの ESC/POS コマンド実装
 
-- コード例を交えた実装手順
-- サンプルコードの解説
-- エラーハンドリングとデバッグのポイント
+先に例で挙げた「**Hello World**」を印刷するコマンドを、前節の Bluetooth の関数で実行させましょう。
 
-## JavaScript OSSを使ったレシート印刷
+```swift
+var command = Data()
+command.append(contentsOf: [0x1b, 0x40]) // 初期化
+command.append(contentsOf: [0x1b, 0x45, 0x01]) // 太字オン
+command.append(contentsOf: [0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 
+                            0x57, 0x6f, 0x72, 0x6c, 0x64]) // Hello World
+command.append(contentsOf: [0x0a]) // 改行
 
-- 利用する OSS の紹介（例：escpos-printer）
-- OSS のインストールと設定
-- サンプルコードと実装手順
-- iOS と OSS の連携方法
-- 応用編：カスタマイズと高度な機能
+try send(data: command)
+```
 
-## レシートのデザインカスタマイズ
+はい、簡単ですね。印刷用コマンドを直接送るという難しい印象ですが、実はとても簡単なコードで印刷ができます。なお、上記の例は直接コマンドを書いているため、可読性はあまりよくないです。一例ですが、実際にコーディングする際は enum で印刷命令を定義して、それに対応するコマンドを返すようにすれば可読性が保たれるでしょう。
 
-- 画像や QR コードの印刷
-- 複数のプリンターへの対応
-- まとめと今後の展望
+```swift
+enum PrintOrder {
+  case bold(isBold: Bool)
+}
 
-## 記事のまとめ
+extension PrintOrder {
+  func command() -> Data {
+    switch self {
+    case .bold(let isBold):
+      return Data([0x1b, 0x45, isBold ? 0x01 : 0x00])
+    }
+  }
+}
+```
 
-- 今後の技術の発展と応用例
-- 参考資料と追加リソース
+実際にレシートを印刷する際にあると便利な他の ESC/POS コマンドを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明するため、詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
+
+[^sunmi-esc-pos-command]: https://developer.sunmi.com/docs/en-US/xeghjk491/ciqeghjk513
+
+### 日本語
+
+例では英字を印刷しましたが、日本語も印刷できます。私が保持しているサーマルプリンターは ShiftJIS でエンコードしたものを指定します。
+
+```swift
+var date = Data()
+if let textData = text.data(using: .shiftJIS) {
+  date.append(textData)
+}
+return date
+```
+
+### フィード（紙送り）
+
+印刷した直後の用紙位置はサーマルヘッドの位置のままなので、適度に紙送りをします。改行の `0a` がありますが、n 行分だけ紙送りするので専用のコマンドを利用するとよいです。
+
+| コマンド | 説明 | コード |
+| :-- | :-- | :-- |
+| <div class="no-break">ESC d n</div> | n行だけ紙送りする | 1b 64 n |
+
+```swift
+return Data([0x1b, 0x64, UInt8(count)])
+```
+
+### 文字サイズ
+
+文字のサイズを指定します。絶対値ではなく倍率（1 ~ 8 倍）で指定します。縦横それぞれの倍率はビットマクスを利用して、１つの値でそれぞれの倍率を指定します。分かりにくい指定方法が出てきましたね…。
+
+| コマンド | 説明 | コード |
+| :-- | :-- | :-- |
+| <div class="no-break">GS ! n</div> | 縦横最大8倍<br/>n のビット0-3が横、4-7が縦の倍率 | 1d 21 n |
+
+```swift
+let widthScale = UInt8(16 * (width - 1))  // width は 1 ~ 8
+let heightScale = UInt8(height - 1)       // height は 1 ~ 8
+return Data([0x1d, 0x21, widthScale + heightScale])
+```
+
+### 画像
+
+二値画像を印刷します。コマンドで、画像印刷用の命令、幅と横のサイズ、そして色情報のバイトコード列を指定していきます。
+
+| コマンド | 説明 | コード |
+| :-- | :-- | :-- |
+| <div class="no-break">GS v 0 m xL xH yL yH d1....dk</div> | 二値画像を印刷する | 1d 76 30 m xL xH yL yH d1....dk |
+
+xL、xH、yL、yH は画像サイズで示し、次の式を満たす値です。幅は 1 byte あたりに 8 つの要素を指定するように設定するので、8 で割っています。
+
+```swift
+width = (xL + xH * 256) * 8
+height = (xL + xH * 256) * 8
+```
+
+d は画像データです。ビットマクスを利用して 1 byte あたりに 8 つの要素の色情報（0 or 1）を設定します。たとえば、n 番目の色情報を `c(n)` とすると、k 番目の d は次のように設定します。なお、8 の倍位数でなければ 0 を埋めておきます。
+
+```swift
+d[k] = c(k+0) << 7 | c(k+1) << 6 | c(k+2) << 5 | c(k+3) << 4
+       | c(k+4)<< 3 | c(k+5) << 2 | c(k+6) << 1 | c(k+7)
+```
+
+以上からコマンドを作成します。紙面の都合上、画像変換の関数は省略します。付録を参照してください。なお、私はビットマクスを日常的には使わないので、画像変換も久々にやったので、なかなかうまくいかず試行錯誤しました。難しい。
+
+```swift
+let m = UInt8(0)  // 標準モード
+let xL = UInt8((width / 8) % 256)
+let xH = UInt8((width / 8) / 256)
+let yL = UInt8(height % 256)
+let yL = UInt8(height / 256)
+let imageData: [UInt8] = convert1BitBinaryBitmap(image)
+return Data([0x1d, 0x76, 0x30, m, xL, xH, yL, yH] + imageData)
+```
+
+### 他プラットフォームにおける ESC/POS コマンド
+
+ここまで読まれて、気付かれた方は居ますでしょうか。ESC/POS コマンドは iOS には依存してないです。他のプラットフォームでも利用できます。Bluetooth の制御関数を用意できれば Kotlin や JavaScript でも利用できます。
+
+```kotlin
+// Kotlin
+val bold = byteArrayOf(0x1b, 0x45, if (isBold) 0x01 else 0x00)
+send(bold)
+```
+
+```javascript
+// JavaScript
+const bold = new Uint8Array([0x1B, 0x45, isBold ? 0x01 : 0x00]);
+send(bold);
+```
+
+## OSS を使ったレシート印刷
+
+前節で ESC/POS コマンドを使った印刷方法を紹介しました。一部で難しいコマンド設定がありましたが、一度作ってしまえば、他プラットフォームでも利用できるということで、移植性も容易です。とてもよいですね…といいたいところですが、重大な問題があります。ESC/POS コマンドはメーカーごとに一部のコマンドが異なっています。いわゆる方言がメーカーそれぞれにあります。たとえば、先ほど紹介した画像印刷ですが、エプソンのモバイルサーマルプリンターでは利用できません。エプソン版では、まず画像をキャッシュするコマンドを実行してから、そのキャッシュを印刷する二段階で実行します。
+
+我々は（OS で差異はありますが）１つの Swift で開発しているので、それぞれで言語が異なるのは衝撃的です。それを知ると、コマンドもやっぱり書きづらいし、ESC/POS コマンドは書きたくない！と手のひらを返します。しかし、捨てる神あれば拾う神あり、レシート印刷に便利な OSS が存在します。
+
+### ReceiptLine
+
+ReceiptLine は、小型ロール紙の出力イメージを表現するレシート記述言語の OSS です [^receiptline-web] 。マークダウンで書いたレシートを ESC/POS コマンドに変換してくれます。コマンドの記述は複雑なのでマークダウンで書けると便利ですね。また、さきほどメーカーごとに異なると書きましたが、この ReceiptLine は ESC/POS コマンドの他に、SVG でも出力できます。SVG はアプリ内で画像に変換できるので、画像印刷さえコマンドで準備したら印刷できます。よかったね！といいたいところですが、今回も問題があります。この ReceiptLine は JavaScript で作られており、Swift への移植はありません [^receiptline-github]。
+
+[^receiptline-web]: https://www.ofsc.or.jp/receiptline_/
+[^receiptline-github]: https://github.com/receiptline/receiptline
+
+### JavaScript のライブラリを iOS で動かす
+
+実は iOS は JavaScriptCore を持っているので、JavaScript のライブラリを実行できます。まず、準備として、その receiptline を追加します。
+
+```shell
+mkdir js-packages
+cd js-packages
+yarn init
+yarn add receiptline
+```
+
+追加された receiptline をすぐに読み込みたいところですが、js のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形で作成します。まず、この receiptline を Bridge クラスで関数を定義します。
+
+[^webpack]: https://webpack.js.org/
+
+```javascript
+import { transform } from "receiptline"
+
+export class Bridge {
+    static transformSvg(doc) {
+        const display = {
+            cpl: 42,
+            encoding: 'multilingual'
+        }
+        const svg = transform(doc, display)
+        return svg
+    }
+}
+```
+
+設定ファイル `webpack.config.js` を元にバンドルファイルが生成されます。設定ファイルの記述に関しては省略します。サンプルリポジトリ [^UseJavaScriptPackages-github] を参照してください。生成されたファイルを `bundle.js` とします。
+
+```shell
+yarn add -D webpack webpack-cli
+yarn webpack
+```
+
+生成されたファイルを iOS アプリのプロジェクトに追加します。フレームワーク JavaScriptCore を import して、JSContext でそのファイルを読み込みます。
+
+```swift
+guard
+    let path = Bundle.main.path(forResource: "bundle.js", ofType: nil),
+    let contents = try? String(contentsOfFile: path)
+else {
+    throw Error()
+}
+        
+let context: JSContext = JSContext(virtualMachine: JSVirtualMachine())
+context.evaluateScript(contents)
+```
+
+context に対して webpack で設定したモジュール名や関数名を頼りに関数を取得して、実行します。こちらは勉強会で発表したので、そのスライド [^UseJavaScriptPackages-slide] を参照してください。
+
+```swift
+let module = context.objectForKeyedSubscript("Module")
+let bridge = module?.objectForKeyedSubscript("Bridge")
+let transformSvg = bridge?.objectForKeyedSubscript("transformSvg")
+let svg = transformSvg?.call(withArguments: [markdownText])
+```
+
+[^UseJavaScriptPackages-github]: https://github.com/mitsuharu/UseJavaScriptPackages
+[^UseJavaScriptPackages-slide]: Vanilla JavaScript はマルチプラットフォームの夢を見るか https://speakerdeck.com/mitsuharu/2024-05-17-javascript-multiplatform
+
+### （おまけ）SVG を画像化する
+
+WKWebView の `takeSnapshot(with:completionHandler:)` を利用すると SVG を簡単に画像化できます。
+
+## まとめ
+
+ESC/POS コマンドを利用して、iPhone でサーマルプリンターを制御する方法を紹介しました。正直なところ、もしメーカーが SDK を公開していたならば、その SDK を利用する方がよいです。私が保持している SUNMI のサーマルプリンターは SDK があるのですが、ファームウェアのバージョンが要件を満たしてないので非対応でした。ESC/POS コマンドを使うしかありません。なお、エプソンのモバイルサーマルプリンターは SDK があります。SDK ありなしで開発を比べると、エプソンの方が開発体験は圧倒的によいです。ではなんで、ESC/POS コマンドを使ったの？ですが、単純に面白いからです。
+
+現在、このアプリは次のリポジトリで開発しています。現在も開発中のため、紹介するソースコードは変更される場合があります。ご了承ください。
+
+```url
+https://github.com/mitsuharu/Calliope
+```
