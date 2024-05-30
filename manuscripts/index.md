@@ -240,17 +240,92 @@ const bold = new Uint8Array([0x1B, 0x45, isBold ? 0x01 : 0x00]);
 send(bold);
 ```
 
-## OSSを使ったレシート印刷
+## OSS を使ったレシート印刷
 
-- ESC/POS コマンドの問題点。方言
-- 利用する OSS の紹介（例：escpos-printer）
-- OSS のインストールと設定
-- サンプルコードと実装手順
-- iOS と OSS の連携方法
-- 応用編：カスタマイズと高度な機能
+前節で ESC/POS コマンドを使った印刷方法を紹介しました。一部で難しいコマンド設定がありましたが、一度作ってしまえば、他プラットフォームでも利用できるということで、移植性も容易です。とてもよいですね…といいたいところですが、重大な問題があります。ESC/POS コマンドはメーカーごとに一部のコマンドが異なっています。いわゆる方言がメーカーそれぞれにあります。たとえば、先ほど紹介した画像印刷ですが、エプソンのモバイルサーマルプリンターでは利用できません。エプソン版では、まず画像をキャッシュするコマンドを実行してから、そのキャッシュを印刷する二段階で実行します。
 
+我々は（OS で差異はありますが）１つの Swift で開発しているので、それぞれで言語が異なるのは衝撃的です。それを知ると、コマンドもやっぱり書きづらいし、ESC/POS コマンドは書きたくない！と手のひらを返します。しかし、捨てる神あれば拾う神あり、レシート印刷に便利な OSS が存在します。
 
-## 記事のまとめ
+### ReceiptLine
 
-- 今後の技術の発展と応用例
-- 参考資料と追加リソース
+ReceiptLine は、小型ロール紙の出力イメージを表現するレシート記述言語の OSS です [^receiptline-web] 。マークダウンで書いたレシートを ESC/POS コマンドに変換してくれます。コマンドの記述は複雑なのでマークダウンで書けると便利ですね。また、さきほどメーカーごとに異なると書きましたが、この ReceiptLine は ESC/POS コマンドの他に、SVG でも出力できます。SVG はアプリ内で画像に変換できるので、画像印刷さえコマンドで準備したら印刷できます。よかったね！といいたいところですが、今回も問題があります。この ReceiptLine は JavaScript で作られており、Swift への移植はありません [^receiptline-github]。
+
+[^receiptline-web]: https://www.ofsc.or.jp/receiptline_/
+[^receiptline-github]: https://github.com/receiptline/receiptline
+
+### JavaScript のライブラリを iOS で動かす
+
+実は iOS は JavaScriptCore を持っているので、JavaScript のライブラリを実行できます。まず、準備として、その receiptline を追加します。
+
+```shell
+mkdir js-packages
+cd js-packages
+yarn init
+yarn add receiptline
+```
+
+追加された receiptline をすぐに読み込みたいところですが、js のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形で作成します。まず、この receiptline を Bridge クラスで関数を定義します。
+
+[^webpack]: https://webpack.js.org/
+
+```javascript
+import { transform } from "receiptline"
+
+export class Bridge {
+    static transformSvg(doc) {
+        const display = {
+            cpl: 42,
+            encoding: 'multilingual'
+        }
+        const svg = transform(doc, display)
+        return svg
+    }
+}
+```
+
+設定ファイル `webpack.config.js` を元にバンドルファイルが生成されます。設定ファイルの記述に関しては省略します。サンプルリポジトリ [^UseJavaScriptPackages-github] を参照してください。生成されたファイルを `bundle.js` とします。
+
+```shell
+yarn add -D webpack webpack-cli
+yarn webpack
+```
+
+生成されたファイルを iOS アプリのプロジェクトに追加します。フレームワーク JavaScriptCore を import して、JSContext でそのファイルを読み込みます。
+
+```swift
+guard
+    let path = Bundle.main.path(forResource: "bundle.js", ofType: nil),
+    let contents = try? String(contentsOfFile: path)
+else {
+    throw Error()
+}
+        
+let context: JSContext = JSContext(virtualMachine: JSVirtualMachine())
+context.evaluateScript(contents)
+```
+
+context に対して webpack で設定したモジュール名や関数名を頼りに関数を取得して、実行します。こちらは勉強会で発表したので、そのスライド [^UseJavaScriptPackages-slide] を参照してください。
+
+```swift
+let module = context.objectForKeyedSubscript("Module")
+let bridge = module?.objectForKeyedSubscript("Bridge")
+let transformSvg = bridge?.objectForKeyedSubscript("transformSvg")
+let svg = transformSvg?.call(withArguments: [markdownText])
+```
+
+[^UseJavaScriptPackages-github]: https://github.com/mitsuharu/UseJavaScriptPackages
+[^UseJavaScriptPackages-slide]: Vanilla JavaScript はマルチプラットフォームの夢を見るか https://speakerdeck.com/mitsuharu/2024-05-17-javascript-multiplatform
+
+### （おまけ）SVG を画像化する
+
+WKWebView の `takeSnapshot(with:completionHandler:)` を利用すると SVG を簡単に画像化できます。
+
+## まとめ
+
+ESC/POS コマンドを利用して、iPhone でサーマルプリンターを制御する方法を紹介しました。正直なところ、もしメーカーが SDK を公開していたならば、その SDK を利用する方がよいです。私が保持している SUNMI のサーマルプリンターは SDK があるのですが、ファームウェアのバージョンが要件を満たしてないので非対応でした。ESC/POS コマンドを使うしかありません。なお、エプソンのモバイルサーマルプリンターは SDK があります。SDK ありなしで開発を比べると、エプソンの方が開発体験は圧倒的によいです。ではなんで、ESC/POS コマンドを使ったの？ですが、単純に面白いからです。
+
+現在、このアプリは次のリポジトリで開発しています。現在も開発中のため、紹介するソースコードは変更される場合があります。ご了承ください。
+
+```url
+https://github.com/mitsuharu/Calliope
+```
