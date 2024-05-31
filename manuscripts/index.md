@@ -16,7 +16,7 @@ Bluesky: @mitsuharu.bsky.social
 
 ## 開発環境
 
-開発環境は MacBook Pro 14 インチ 2021、Apple M1 Pro、macOS Sonoma 14.5 を用いて、Xcode 15.3 で開発しました。検証機として iPhone SE（第３世代）、iOS 17.5 を利用しました。
+開発環境は MacBook Pro 14 インチ 2021、Apple M1 Pro、macOS Sonoma 14.5 を用いて、Xcode 15.3 で開発しました。検証機として iPhone SE（第３世代）、iOS 17.5.1 を利用しました。
 
 ### 対象のサーマルプリンターについて
 
@@ -84,7 +84,7 @@ for await scanData in stream {
 }
 ```
 
-接続した Peripheral から、印刷に関するサービス（serviceUUID）および、そのサービスのデータ値に対応するキャラクタリスティック（characteristicUUID）を取得します。今回はデータ送信するため、書き込み可能なキャラクタリスティックを選択します。例では、単純に条件に合う最初の組み合わせを選択してますが、実際は機種のドキュメントを確認して、適切な組み合わせを選択してください。
+接続した Peripheral から、印刷に関するサービス（serviceUUID）および、そのサービスのデータ構造のキャラクタリスティック（characteristicUUID）を取得します。今回はデータ送信するため、書き込み可能なキャラクタリスティックを選択します。例では、単純に条件に合う最初の組み合わせを選択してますが、実際は機種のドキュメントを確認して、適切な組み合わせを選択してください。
 
 ```swift
 try await peripheral.discoverServices(nil)
