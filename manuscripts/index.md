@@ -100,7 +100,7 @@ for service in peripheral.discoveredServices ?? [] {
   else {
     continue
   }
-   return (serviceUUID, characteristicUUID)
+  return (serviceUUID, characteristicUUID)
 }
 ```
 
@@ -109,7 +109,7 @@ for service in peripheral.discoveredServices ?? [] {
 ```swift
 func send(data: Data) async throws {
   try await peripheral.writeValue(
-    value,
+    data,
     forCharacteristicWithUUID: characteristicUUID,
     ofServiceWithUUID: serviceUUID
   )
@@ -131,7 +131,7 @@ command.append(contentsOf: [0x0a]) // 改行
 try send(data: command)
 ```
 
-はい、簡単ですね。印刷用コマンドを直接送るという難しい印象ですが、実はとても簡単なコードで印刷ができます。なお、上記の例は直接コマンドを書いているため、可読性はあまりよくないです。一例ですが、実際にコーディングする際は enum で印刷命令を定義して、それに対応するコマンドを返すようにすると可読性は保たれるでしょう。
+はい、簡単ですね。印刷用コマンドを直接送るという難しい印象がありますが、実はとても簡単なコードで印刷ができます。なお、上記の例は直接コマンドを書いているため、可読性はよくないです。一例ですが、実際にコーディングする際は enum で印刷命令を定義して、それに対応するコマンドを返すようにすると可読性は保たれるでしょう。
 
 ```swift
 enum PrintOrder {
@@ -148,7 +148,7 @@ extension PrintOrder {
 }
 ```
 
-実際にレシートを印刷する際にあると便利な他の ESC/POS コマンドを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明します。詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
+先の例で挙げたコマンド以外に、実際にレシートを印刷する際にあると便利な ESC/POS コマンドのいくつかを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明します。詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
 
 [^sunmi-esc-pos-command]: https://developer.sunmi.com/docs/en-US/xeghjk491/ciqeghjk513
 
@@ -157,16 +157,16 @@ extension PrintOrder {
 例では英字を印刷しましたが、日本語も印刷できます。私が保持しているサーマルプリンターは ShiftJIS でエンコードしたものを指定します。
 
 ```swift
-var date = Data()
+var command = Data()
 if let textData = text.data(using: .shiftJIS) {
-  date.append(textData)
+  command.append(textData)
 }
-return date
+return command
 ```
 
 ### フィード（紙送り）
 
-印刷した直後の用紙位置はサーマルヘッドの位置のままなので、適度に紙送りをします。改行の `0a` でも代用できますが、n 行分だけ紙送りするので専用のコマンドを利用するとよいです。
+印刷した直後の用紙位置はサーマルヘッドの位置のままなので、適度に紙送りをします。改行コードの `0a` で代用できますが、n 行分だけ紙送りするので専用のコマンドを利用するとよいです。
 
 | コマンド | 説明 | コード |
 | :-- | :-- | :-- |
@@ -205,14 +205,14 @@ width = (xL + xH * 256) * 8
 height = (xL + xH * 256)
 ```
 
-d は画像データです。ビットマクスを利用して 1 byte あたり 8 つ分の色情報（0 or 1）を設定します。たとえば、n 番目の色情報を `c(n)` とすると、k 番目の d は次のように設定します（k は 0 ~ (width * height)/8 の自然数）。なお、サイズが 8 の倍数でなければ 0 を埋めておきます。
+d は画像データです。ビットマクスを利用して 1 byte あたり 8 つ分の色情報（0 or 1）を設定します。たとえば、n 番目の色情報を `c(n)` とすると、k 番目の d は次のように設定します（k は 0 ~ (width * height)/8 の自然数）。なお、幅サイズが 8 の倍数でなければ 0 を埋めておきます。
 
 ```swift
 d[k] = c(k*8+0) << 7 | c(k*8+1) << 6 | c(k*8+2) << 5 | c(k*8+3) << 4
        | c(k*8+4)<< 3 | c(k*8+5) << 2 | c(k*8+6) << 1 | c(k*8+7)
 ```
 
-以上からコマンドを作成します。紙面の都合上、画像変換の関数の実装紹介は省略します（付録を参照してください）。なお、私はビットマクスを日常的には使わないので、画像変換も久々にやったので、なかなかうまくいかず試行錯誤しました。難しい。
+以上からコマンドを作成します。紙面の都合上、画像変換の関数の実装紹介は省略します（付録を参照してください）。なお、私はビットマクスを日常的には使わない、画像変換も久々にやったので、なかなか上手くいかず試行錯誤しました。難しいです…。
 
 ```swift
 let m = UInt8(0)  // 標準モード
@@ -220,13 +220,13 @@ let xL = UInt8((width / 8) % 256)
 let xH = UInt8((width / 8) / 256)
 let yL = UInt8(height % 256)
 let yL = UInt8(height / 256)
-let imageData: [UInt8] = convert1BitBinaryBitmap(image)
+let imageData: [UInt8] = convert1BitBitmap(image)
 return Data([0x1d, 0x76, 0x30, m, xL, xH, yL, yH] + imageData)
 ```
 
 ### 他プラットフォームにおける ESC/POS コマンド
 
-ここまで読まれて、気付かれた方は居ますでしょうか。ESC/POS コマンドは iOS には依存してないです。他のプラットフォームでも利用できます。Bluetooth の制御関数を用意できれば Kotlin や JavaScript でも利用できます。
+ここまで読まれて、気付かれた方が居るでしょう。ESC/POS コマンドは iOS には依存していません。もちろん他プラットフォームでも利用できます。Bluetooth の制御関数を用意できれば Kotlin や JavaScript でも利用できます。
 
 ```kotlin
 // Kotlin
@@ -248,23 +248,23 @@ send(bold);
 
 ### ReceiptLine
 
-ReceiptLine は、小型ロール紙の出力イメージを表現するレシート記述言語の OSS です [^receiptline-web] 。マークダウンで書いたレシートを ESC/POS コマンドに変換してくれます。コマンドの記述は複雑なのでマークダウンで書けると便利ですね。また、さきほどメーカーごとに異なると書きましたが、この ReceiptLine は ESC/POS コマンドの他に、SVG でも出力できます。SVG はアプリ内で画像に変換できるので、画像印刷さえコマンドで準備したら印刷できます。よかったね！といいたいところですが、今回も問題があります。この ReceiptLine は JavaScript で作られており、Swift への移植はありません [^receiptline-github]。
+ReceiptLine は、小型ロール紙の出力イメージを表現するレシート記述言語の OSS です [^receiptline-web] 。マークダウンで書いたレシートを ESC/POS コマンドに変換してくれます。コマンドの記述は複雑なのでマークダウンで書けると便利ですね。また、先ほどメーカーごとに異なると書きましたが、この ReceiptLine は ESC/POS コマンドの他に、SVG でも出力できます。SVG はアプリ内で画像に変換できるので、画像印刷さえコマンドで準備したら印刷できます。よかったね！といいたいところですが、今回も問題があります。この ReceiptLine は JavaScript で作られており、Swift への移植はありません [^receiptline-github]。
 
 [^receiptline-web]: https://www.ofsc.or.jp/receiptline_/
 [^receiptline-github]: https://github.com/receiptline/receiptline
 
 ### JavaScript のライブラリを iOS で動かす
 
-一筋の光明が差す。iOS は JavaScriptCore を持っているので、JavaScript のライブラリを実行できます。準備として、その receiptline を手元に用意します。
+一筋の光明が差す。iOS は JavaScriptCore を持っているので、JavaScript のライブラリを実行できます。準備として、その ReceiptLine を手元に用意します。
 
-```shell
+```bash
 mkdir js-packages
 cd js-packages
 yarn init
 yarn add receiptline
 ```
 
-この用意した receiptline をすぐに読み込みたいところですが、js のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形に作成します。まず、JavaScript のブリッヂとなるクラスで receiptline を関数定義します。
+この用意した receiptline をすぐに読み込みたいところですが、js のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形に作成します。まず、JavaScript のブリッヂとなるクラスで ReceiptLine を関数定義します。
 
 [^webpack]: https://webpack.js.org/
 
@@ -285,7 +285,7 @@ export class Bridge {
 
 そのファイルから設定ファイル `webpack.config.js` に基づいて、バンドルファイルが生成されます。設定ファイルの記述に関しては省略します。サンプルリポジトリ [^UseJavaScriptPackages-github] を参照してください。生成されたバンドルファイルを `bundle.js` とします。
 
-```shell
+```bash
 yarn add -D webpack webpack-cli
 yarn webpack
 ```
@@ -322,9 +322,9 @@ WKWebView の `takeSnapshot(with:completionHandler:)` を利用すると SVG を
 
 ## まとめ
 
-ESC/POS コマンドを利用して、iPhone でサーマルプリンターを制御する方法を紹介しました。正直なところ、もしメーカーが SDK を公開していたら、その SDK を利用する方がよいです。私が保持している SUNMI のサーマルプリンターは SDK があるのですが、ファームウェアのバージョンが要件を満たしてないので非対応でした。ESC/POS コマンドを利用するしかありません。なお、エプソンのモバイルサーマルプリンターには SDK があります。SDK ありなしで開発を比べると、エプソンの方が開発体験は圧倒的によいです。ではどうして「今回 ESC/POS コマンドを取り上げたの？」ですが、単純に面白いからです。
+ESC/POS コマンドを利用して、iPhone でサーマルプリンターを制御する方法を紹介しました。正直なところ、もしメーカーが SDK を公開していたら、その SDK を利用する方がよいです。私が所有している SUNMI のサーマルプリンターは SDK があるのですが、ファームウェアのバージョンが要件を満たしてないので非対応でした。ESC/POS コマンドを利用するしかありません。なお、エプソンのモバイルサーマルプリンターには SDK があります。SDK の有無で開発を比べると、エプソンの方が開発体験は圧倒的によいです。ではどうして「今回 ESC/POS コマンドを取り上げたの？」ですが、単純に面白いからです。
 
-今回紹介した内容をもとに開発している印刷アプリのリポジトリを付録します。なお、現在も開発中のため、紹介したソースコードは変更される場合があります。ご了承ください。
+今回紹介した内容をもとに開発している印刷アプリのリポジトリを付録します。なお、現在も開発中のため、紹介したソースコードは変更される場合があります。ご了承ください。よいサーマルプリンターライフを！
 
 ```url
 https://github.com/mitsuharu/Calliope
