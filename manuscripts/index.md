@@ -16,7 +16,7 @@ Bluesky: @mitsuharu.bsky.social
 
 ## 開発環境
 
-開発環境は MacBook Pro 14 インチ 2021、Apple M1 Pro、macOS Sonoma 14.5 を用いて、Xcode 15.3 で開発しました。検証機として iPhone SE（第３世代）、iOS 17.5.1 を利用しました。
+開発環境は MacBook Pro 14 インチ 2021、Apple M1 Pro、macOS Sonoma 14.5 を用いて、Xcode 15.4 (15F31d) で開発しました。検証機として iPhone SE（第３世代）、iOS 17.5.1 を利用しました。
 
 ### 対象のサーマルプリンターについて
 
