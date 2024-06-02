@@ -131,13 +131,19 @@ command.append(contentsOf: [0x0a]) // 改行
 try send(data: command)
 ```
 
-はい、簡単ですね。印刷用コマンドを直接送るという難しい印象がありますが、実はとても簡単なコードで印刷ができます。なお、上記の例は直接コマンドを書いているため、可読性は悪いです。一例ですが、実際にコーディングする際は enum で印刷命令を定義して、それに対応するコマンドを返すようにすると可読性は保たれるでしょう。
+印刷用コマンドを直接送ると聞くと、難しい印象がありますが、簡単なコードで印刷できます。なお、一度に書き込めるデータのサイズに上限があるので、その上限サイズを調べて、データを分割して書き込みます。
+
+```swift
+// これで上限値が取得できるが、値は適切ではない（印刷失敗する）。実際は固定値を設定する。
+let mtuSize = peripheral.maximumWriteValueLength(for: .withResponse)
+```
+
+上記の例は直接コマンドを書いているため、可読性は悪いです。一例ですが、実際にコーディングする際は enum で印刷命令を定義して、それに対応するコマンドを返すと可読性は保たれるでしょう。
 
 ```swift
 enum PrintOrder {
   case bold(isBold: Bool)
 }
-
 extension PrintOrder {
   func command() -> Data {
     switch self {
@@ -148,7 +154,7 @@ extension PrintOrder {
 }
 ```
 
-先の例で挙げたコマンド以外に、実際にレシートを印刷する際にあると便利な ESC/POS コマンドのいくつかを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明します。詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
+例で挙げたコマンド以外に、実際にレシートを印刷する際にあると便利な ESC/POS コマンドのいくつかを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明します。詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
 
 [^sunmi-esc-pos-command]: https://developer.sunmi.com/docs/en-US/xeghjk491/ciqeghjk513
 
