@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  lint:
+    build:
+      context: .
+      dockerfile: DockerfileForDockerCompose
+    image: ${TEXT_LINT_IMAGE_NAME}:${TEXT_LINT_IMAGE_TAG}
+    volumes:
+      - .:/workspaces/daigirin-tbf16
+      - /workspaces/daigirin-tbf16/node_modules
+    working_dir: /workspaces/daigirin-tbf16
+    command: yarn lint
