@@ -1,6 +1,6 @@
 module.exports = {
-    title: 'タイトル名',
-    author: '著者名',
+    title: 'iOS デバイスから始める Bluetooth 制御の業務用サーマルプリンター対応アプリの作り方',
+    author: '江本光晴',
     language: 'ja',
     size: 'A4',
     theme: [
