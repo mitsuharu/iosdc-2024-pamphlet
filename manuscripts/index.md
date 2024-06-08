@@ -26,7 +26,7 @@ Bluesky: @mitsuharu.bsky.social
 | :--: | :-: | :-: | :-: | :-: |
 | <div class="no-break">NT212_S</div> | 2.1.0 | 2.2.0 | 1.0.10 | 0.0.1 |
 
-その他に、80mm 幅に対応した兄弟機「SUNMI 80mm Kitchen Cloud Printer」、セイコーエプソン（以下、エプソン）社のモバイル機「TM-P20II」を所有しています。これらでも動作確認を行なっています。
+その他に、80mm 幅に対応した兄弟機「SUNMI 80mm Kitchen Cloud Printer」、セイコーエプソン（以降、エプソン）社のモバイル機「TM-P20II」を所有しています。これらでも動作確認を行なっています。
 
 ## サーマルプリンターのページ記述言語
 
@@ -270,7 +270,7 @@ yarn init
 yarn add receiptline
 ```
 
-この用意した receiptline をすぐに読み込みたいところですが、js のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形に作成します。まず、JavaScript のブリッヂとなるクラスで ReceiptLine を関数定義します。
+この用意した receiptline をすぐに読み込みたいところですが、JavaScript のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形に作成します。まず、JavaScript のブリッヂとなるクラスで ReceiptLine を関数定義します。
 
 [^webpack]: https://webpack.js.org/
 
