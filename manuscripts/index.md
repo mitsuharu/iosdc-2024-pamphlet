@@ -270,7 +270,7 @@ yarn init
 yarn add receiptline
 ```
 
-この用意した receiptline をすぐに読み込みたいところですが、js のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形に作成します。まず、JavaScript のブリッヂとなるクラスで ReceiptLine を関数定義します。
+この用意した receiptline をすぐに読み込みたいところですが、JavaScript のファイル構成や他ライブラリ依存性の問題で簡単には読み込めません。そこで、webpack [^webpack] を利用して、読み込みやすい形に作成します。まず、JavaScript のブリッヂとなるクラスで ReceiptLine を関数定義します。
 
 [^webpack]: https://webpack.js.org/
 
