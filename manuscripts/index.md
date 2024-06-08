@@ -254,7 +254,7 @@ send(bold);
 
 ### ReceiptLine
 
-ReceiptLine は、小型ロール紙の出力イメージを表現するレシート記述言語の OSS です [^receiptline-web] 。マークダウンでレシートを書いて、そのマークダウンを ESC/POS コマンドに変換してくれます。コマンドの記述は複雑なのでマークダウンで書けるのは便利ですね。また、先ほどメーカーごとに異なると書きましたが、この ReceiptLine は ESC/POS コマンドの他に、SVG でも出力できます。SVG はアプリ内で画像に変換できるので、画像印刷さえコマンドで準備したら印刷できます。よかったね！といいたいところですが、今回も問題があります。この ReceiptLine は JavaScript で作られており、Swift への移植はありません [^receiptline-github] 。
+ReceiptLine は、小型ロール紙の出力イメージを表現するレシート記述言語の OSS です [^receiptline-web] 。マークダウンでレシートを書いて、そのマークダウンを ESC/POS コマンドに変換してくれます。コマンドの記述は複雑なのでマークダウンで書けるのは便利ですね。また、先ほどメーカーごとに異なると書きましたが、この ReceiptLine は ESC/POS コマンドの他に、SVG でも出力できます。SVG はアプリ内で画像に変換できるので、画像印刷さえコマンドで準備したら印刷できます。よかったね！といいたいところですが、今回も問題があります。この ReceiptLine は JavaScript で作られており、Swift への移植はありません。
 
 [^receiptline-web]: https://www.ofsc.or.jp/receiptline_/
 [^receiptline-github]: https://github.com/receiptline/receiptline
@@ -332,8 +332,10 @@ WKWebView の `takeSnapshot(with:completionHandler:)` を利用すれば SVG を
 
 ESC/POS コマンドを利用して、iPhone でサーマルプリンターを制御する方法を紹介しました。正直なところ、もしメーカーが SDK を公開していたら、その SDK を利用する方がよいです。私が所有している SUNMI のサーマルプリンターには SDK がありますが、ファームウェアのバージョンが動作要件を満たしてないため非対応でした。ESC/POS コマンドを利用するしかありませんでした。なお、エプソンのサーマルプリンターには SDK があります。SDK の有無で開発を比べると、エプソンの方が開発体験は圧倒的によいです。ではどうして「今回 ESC/POS コマンドを取り上げたの？」ですが、単純に面白いからです。
 
-今回紹介した内容をもとに開発している印刷アプリの GitHub リポジトリを付録します。現在も開発中のため、ソースコードは変更される場合があります。ご了承ください。よいサーマルプリンターライフを！
+今回紹介した内容をもとに開発している印刷アプリの GitHub リポジトリを付録します。現在も開発中のため、ソースコードは変更される場合があります。ご了承ください。よいサーマルプリンターライフを！ [^iosdc-2024-pamphlet]
 
 ```url
 https://github.com/mitsuharu/Calliope
 ```
+
+[^iosdc-2024-pamphlet]: この記事の電子版・誤字対応は https://github.com/mitsuharu/iosdc-2024-pamphlet にて
