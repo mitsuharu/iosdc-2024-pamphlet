@@ -1,20 +1,19 @@
-iosdc-pamphlet-template
-==
+# iosdc-2024-pamphlet
 
-iOSDC Japan に投稿するパンフレット記事のテンプレートです。作者が iOSDC Japan 2023 で投稿したものを元に作成しました。
+[iOSDC Japan 2024](https://iosdc.jp/2024/) に投稿したパンフレット記事です。
 
 ## 環境
 
 ### 必須
 
 - Node.js 20 以上
-	- vivliostyle を利用するため
+  - vivliostyle を利用するため
 
 ### 任意
- 
- - VS Code
+
+- VS Code
 - Docker
-	- 入稿データ作成に利用します
+  - 入稿データ作成に利用します
 
 ## 執筆手順
 
@@ -44,7 +43,6 @@ PDFの作成と開くを同時に行う。
 yarn start
 ```
 
-
 ### 入稿データの作成
 
 Docker で実行する（推奨）。`output/press.pdf` に出力されます。
@@ -58,15 +56,6 @@ Docker ではなく、ローカル環境で実行する
 ```shell
 yarn press-local
 ```
-
-Docker ではなく、Colima で実行する
-
-
-```shell
-yarn press-colima
-```
-
-
 
 ## 文章校正
 
@@ -119,7 +108,6 @@ textlint を無効にしたい文章をここに書く
 
 - 現状は `"@vivliostyle/theme-techbook@^1.0.1"` をベースにして、`theme/custom_theme.css` で色やフォントサイズを修正してます
 - フォントサイズなど簡単な変更は `./theme/style.css` を適宜修正する
-
 
 ### 参照
 
