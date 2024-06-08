@@ -261,7 +261,7 @@ ReceiptLine は、小型ロール紙の出力イメージを表現するレシ�
 
 ### JavaScript のライブラリを iOS で動かす
 
-移植版を作りたいが難しい。詰んだところに、一筋の光明が差す。iOS は JavaScriptCore を持っているので、JavaScript のライブラリを実行できます。準備として、その ReceiptLine を手元に用意します。
+Swift 移植版を作りたいが難しいと詰んだところに、一筋の光明が差す。iOS は JavaScriptCore を持っているので、JavaScript のライブラリを実行できます。準備として、その ReceiptLine を手元に用意します。
 
 ```bash
 mkdir js-packages
