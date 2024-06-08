@@ -1,7 +1,8 @@
-iosdc-pamphlet-template
+iosdc-2024-pamphlet
 ==
 
-iOSDC Japan に投稿するパンフレット記事のテンプレートです。作者が iOSDC Japan 2023 で投稿したものを元に作成しました。
+私が [iOSDC Japan 2024](https://iosdc.jp/2024/) に投稿したパンフレット記事です。
+
 
 ## 環境
 
@@ -58,14 +59,6 @@ Docker ではなく、ローカル環境で実行する
 ```shell
 yarn press-local
 ```
-
-Docker ではなく、Colima で実行する
-
-
-```shell
-yarn press-colima
-```
-
 
 
 ## 文章校正
