@@ -289,7 +289,7 @@ export class Bridge {
 }
 ```
 
-このブリッヂファイルから webpack の設定ファイルに基づいて、バンドルファイルが生成されます。設定ファイルの記述に関しては省略します。サンプルリポジトリ [^UseJavaScriptPackages-github] を参照してください。生成されたバンドルファイルを `bundle.js` とします。
+このブリッヂファイルから webpack の設定ファイルに基づいて、バンドルファイルを生成します。設定ファイルの記述に関しては省略します。サンプルリポジトリ [^UseJavaScriptPackages-github] を参照してください。生成されたバンドルファイルを `bundle.js` とします。
 
 ```bash
 yarn add -D webpack webpack-cli
