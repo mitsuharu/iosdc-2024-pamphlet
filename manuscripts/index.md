@@ -232,7 +232,7 @@ return Data([0x1d, 0x76, 0x30, m, xL, xH, yL, yH] + imageData)
 
 ### 他プラットフォームにおける ESC/POS コマンド
 
-ここまで読まれて、気付かれた方も居るでしょう。ESC/POS コマンドは iOS には依存していません。もちろん他プラットフォームでも利用できます。Bluetooth の制御関数を用意できれば Kotlin や JavaScript でも利用できます。
+ESC/POS はページ記述言語なので、iOS には依存していません。もちろん他プラットフォームでも利用できます。Bluetooth の制御関数を用意できれば Kotlin や JavaScript でも利用できます。好きな言語や環境で試してみてください。
 
 ```kotlin
 // Kotlin
