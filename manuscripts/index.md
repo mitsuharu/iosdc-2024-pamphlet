@@ -164,7 +164,7 @@ enum PrintOrder {
 
 ```swift
 var command = Data()
-if let textData = text.data(using: .shiftJIS) {
+if let textData = "こんにちは世界".data(using: .shiftJIS) {
   command.append(textData)
 }
 return command
