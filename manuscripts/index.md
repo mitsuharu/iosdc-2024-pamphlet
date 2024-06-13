@@ -66,7 +66,7 @@ CoreBluetooth を用いて、サーマルプリンターを制御します。私
 [^AsyncBluetooth]: https://github.com/manolofdez/AsyncBluetooth
 <!-- textlint-enable -->
 
-まず最初に Bluetooth 機器のスキャンを行い、サーマルプリンターを探します。対象のサーマルプリンターは「CloudPrint_{数字}」という名前が設定されているので、その名前が付けられた機種を選択して接続します。例ではスキャンされた機器の名前を逐次確認して選択しましたが、一般には検出された機種を一覧表示して、目視確認してから選択するとよいでしょう。
+まず最初に Bluetooth デバイスのスキャンを行い、サーマルプリンターを探します。対象のサーマルプリンターは「CloudPrint_{数字}」という名前が設定されているので、その名前が付けられた機種を選択して接続します。例ではスキャンされた機種の名前を逐次確認して選択しましたが、一般には検出された機種を一覧表示して、目視確認してから選択するとよいでしょう。
 
 ```swift
 import AsyncBluetooth
@@ -164,7 +164,7 @@ enum PrintOrder {
 
 ```swift
 var command = Data()
-if let textData = text.data(using: .shiftJIS) {
+if let textData = "こんにちは世界".data(using: .shiftJIS) {
   command.append(textData)
 }
 return command
