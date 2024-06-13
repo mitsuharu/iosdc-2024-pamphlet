@@ -25,3 +25,9 @@
     word-wrap: break-word;
     white-space: nowrap;
 }
+
+/* タイトルをなんとなくセンタリングした */
+h1 {
+  font-feature-settings: "palt", "calt";
+  text-align: center;
+}
