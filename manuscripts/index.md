@@ -118,7 +118,7 @@ func send(data: Data) async throws {
 
 ## iOS アプリで ESC/POS コマンドを実装する
 
-先例で挙げた「**Hello World**」を印刷するコマンドを、前節の Bluetooth の制御関数で実行させましょう。
+先の例で挙げた「**Hello World**」を印刷するコマンドを、前節の Bluetooth の制御関数で実行しましょう。
 
 ```swift
 var command = Data()
@@ -131,7 +131,7 @@ command.append(contentsOf: [0x0a]) // 改行
 try send(data: command)
 ```
 
-印刷用コマンドを直接送ると聞くと、難しい印象がありますが、簡単なコードで印刷できます。なお、一度に書き込めるデータのサイズに上限があるので、その上限サイズを調べて、データを分割して書き込みます。
+「プリンターにコマンドを送る」は難しい印象がありますが、簡単なコードで実現できます。なお、一度に書き込めるデータのサイズに上限があるので、その上限サイズを調べて、データを分割して書き込みます。
 
 ```swift
 // これで上限値が取得できるが、値は適切ではない（値が大きく、印刷失敗する）
@@ -154,7 +154,7 @@ enum PrintOrder {
 }
 ```
 
-先例で挙げたコマンド以外に、レシートを印刷する際に便利な ESC/POS コマンドのいくつかを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明します。詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
+先に挙げたコマンド以外で、レシートを印刷する際に便利な ESC/POS コマンドのいくつかを Swift のコード実装と共に紹介していきます。なお、今回はコマンドを簡単に説明します。詳細はメーカーが提供するドキュメント [^sunmi-esc-pos-command] を確認してください。
 
 [^sunmi-esc-pos-command]: https://developer.sunmi.com/docs/en-US/xeghjk491/ciqeghjk513
 
@@ -188,7 +188,7 @@ return Data([0x1b, 0x64, UInt8(n)]) // n は自然数
 
 | コマンド | 説明 | コード |
 | :-- | :-- | :-- |
-| <div class="no-break">GS ! n</div> | 縦横最大8倍<br/>n のビットの0-3が横、4-7が縦の倍率 | 1d 21 n |
+| <div class="no-break">GS ! n</div> | 縦横最大8倍<br/>n のビットの0-3が横、4-7が縦の倍率（縦横1倍なら00） | 1d 21 n |
 
 ```swift
 let widthScale = UInt8(16 * (width - 1))  // width は 1 ~ 8 の範囲
@@ -230,7 +230,7 @@ let imageData: [UInt8] = convert1BitBitmap(image)
 return Data([0x1d, 0x76, 0x30, m, xL, xH, yL, yH] + imageData)
 ```
 
-### 他プラットフォームにおける ESC/POS コマンド
+### 他プラットフォームにおける ESC/POS コマンドの実行
 
 ESC/POS はページ記述言語なので、iOS には依存していません。もちろん他プラットフォームでも利用できます。Bluetooth の制御関数を用意できれば Kotlin や JavaScript でも利用できます。好きな言語や環境で試してみてください。
 
