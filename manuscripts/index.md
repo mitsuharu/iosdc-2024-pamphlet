@@ -30,7 +30,7 @@ Bluesky: @mitsuharu.bsky.social
 
 ## サーマルプリンターのページ記述言語
 
-ページ記述言語はプリンターに対して印刷を指示するためのプログラミング言語です。アドビが開発した PostScript が有名です。その他のページ記述言語として、エプソンが開発した ESC/P（Epson Standard Code for Printers）があります。ドットインパクトプリンタが主流だった時代には、多くのメーカーがサポートしていました。その ESC/P のバリエーションの１つとして、POS 端末に採用されたサーマルプリンターを制御する ESC/POS があります。この言語は現在も多くのサーマルプリンターでサポートされています。私が所有している３台のサーマルプリンターも ESC/POS をサポートしています。つまり、この ESC/POS の命令（コマンド）を利用すれば、サーマルプリンターで印刷ができます。
+ページ記述言語はプリンターに対して印刷を指示するためのプログラミング言語です。アドビが開発した PostScript が有名です。その他に、エプソンが開発した ESC/P（Epson Standard Code for Printers）があります。ドットインパクトプリンタが主流だった時代には、多くのメーカーがサポートしていました。その ESC/P のバリエーションの１つとして、POS 端末に採用されたサーマルプリンターを制御する ESC/POS があります。この言語は現在も多くのサーマルプリンターでサポートされています。私が所有している３台のサーマルプリンターも ESC/POS をサポートしています。つまり、この ESC/POS の命令（コマンド）を利用すれば、サーマルプリンターで印刷ができます。
 
 ### ESC/POS コマンド
 
@@ -326,7 +326,7 @@ let svg = transformSvg?.call(withArguments: [markdownText])
 
 ### （おまけ）SVG を画像化する
 
-WKWebView の `takeSnapshot(with:completionHandler:)` を利用すれば SVG を簡単に画像化できます。それで生成した画像を ESC/POS コマンドで印刷しましょう。
+WKWebView の takeSnapshot(with:completionHandler:) を利用すれば SVG を簡単に画像化できます。それで生成した画像を ESC/POS コマンドで印刷しましょう。
 
 ## まとめ
 
