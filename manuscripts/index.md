@@ -225,7 +225,7 @@ let m = UInt8(0)  // 標準モード
 let xL = UInt8((width / 8) % 256)
 let xH = UInt8((width / 8) / 256)
 let yL = UInt8(height % 256)
-let yL = UInt8(height / 256)
+let yH = UInt8(height / 256)
 let imageData: [UInt8] = convert1BitBitmap(image)
 return Data([0x1d, 0x76, 0x30, m, xL, xH, yL, yH] + imageData)
 ```
