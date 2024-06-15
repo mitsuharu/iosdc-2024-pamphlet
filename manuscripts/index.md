@@ -66,7 +66,7 @@ CoreBluetooth を用いて、サーマルプリンターを制御します。私
 [^AsyncBluetooth]: https://github.com/manolofdez/AsyncBluetooth
 <!-- textlint-enable -->
 
-まず最初に Bluetooth デバイスのスキャンを行い、サーマルプリンターを探します。対象のサーマルプリンターは「CloudPrint_{数字}」という名前が設定されているので、その名前が付けられた機種を選択して接続します。例ではスキャンされた機種の名前を逐次確認して選択しましたが、一般には検出された機種を一覧表示して、目視確認してから選択するとよいでしょう。
+まず最初に Bluetooth デバイスのスキャンを行い、サーマルプリンターとなる Peripheral を探します。対象のサーマルプリンターは「CloudPrint_{数字}」という名前が設定されているので、その名前が付けられた機種を選択して接続します。例ではスキャンされた機種の名前を逐次確認して選択しましたが、一般には検出された機種を一覧表示して、目視確認してから選択するとよいでしょう。
 
 ```swift
 import AsyncBluetooth
@@ -118,7 +118,7 @@ func send(data: Data) async throws {
 
 ## iOS アプリで ESC/POS コマンドを実装する
 
-先の例で挙げた「**Hello World**」を印刷するコマンドを、前節の Bluetooth の制御関数で実行しましょう。
+先の例で挙げた「**Hello World**」を印刷するコマンドを、前節の Bluetooth の制御関数で実行します。
 
 ```swift
 var command = Data()
@@ -160,7 +160,7 @@ enum PrintOrder {
 
 ### 日本語
 
-例では英字を印刷しましたが、日本語も印刷できます。私が保持しているサーマルプリンターは ShiftJIS でエンコードしたものを指定します。
+例では英字を印刷しましたが、日本語も印刷できます。私が保持しているサーマルプリンターは ShiftJIS でエンコードしたものを利用します。
 
 ```swift
 var command = Data()
@@ -208,7 +208,7 @@ m は印刷モードを指定します。xL、xH、yL、yH は画像サイズで
 
 ```swift
 width = (xL + xH * 256) * 8
-height = (xL + xH * 256)
+height = (yL + yH * 256)
 ```
 
 d は画像データです。1bit ごとに画像情報（0 or 1）を表現する 1bit Bitmap です。たとえば、n 番目の画像情報を `c(n)` とすると、i 番目の d は次のように設定します。i は `0 ~ (width * height)/8` の自然数です。なお、横サイズが 8 の倍数でなければ 0 を埋めておきます。
